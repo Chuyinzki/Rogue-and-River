@@ -36,3 +36,10 @@ Open `http://localhost:3000`.
 
 ## Deployment
 Designed for deployment on Vercel with Supabase as backend services.
+
+Required environment variables:
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_SITE_URL` (recommended in production)
+
+This repo includes CI checks (`lint` + `build`) via GitHub Actions.

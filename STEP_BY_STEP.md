@@ -174,7 +174,27 @@ Still required from you:
 3. Confirm dashboard badge count updates after milestones.
 
 ## Step 7 - Deploy
-- Push to GitHub.
-- Connect repo to Vercel.
-- Add Vercel env vars.
-- Deploy and test production auth flow.
+Completed in code:
+- Added CI workflow for pull requests and `main` pushes:
+  - lint + production build
+  - `.github/workflows/ci.yml`
+- Restored `.env.example` with deployment env vars.
+- Updated auth signup callback URL to prefer `NEXT_PUBLIC_SITE_URL` in production:
+  - `src/app/auth/actions.ts`
+- Updated README deployment notes.
+
+Still required from you:
+1. Push this repo to GitHub.
+2. Connect GitHub repo to Vercel.
+3. Add Vercel environment variables:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `NEXT_PUBLIC_SITE_URL` (your production URL)
+4. In Supabase auth URL settings, add production callback URL:
+   - `https://<your-domain>/auth/callback`
+5. Run end-to-end production test:
+   - signup
+   - email callback
+   - login
+   - create/edit/delete log
+   - achievement display

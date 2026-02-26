@@ -82,17 +82,8 @@ export async function awardAchievementsForHobby({
   userId,
   hobbyType,
 }: {
-  supabase: {
-    from: (table: string) => {
-      select: (columns: string) => {
-        eq: (column: string, value: string) => {
-          eq: (column2: string, value2: string) => Promise<{ data: unknown; error: unknown }>;
-          in: (column2: string, values: string[]) => Promise<{ data: unknown; error: unknown }>;
-        };
-      };
-      insert: (values: unknown) => Promise<{ error: unknown }>;
-    };
-  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any;
   userId: string;
   hobbyType: HobbyType;
 }) {
