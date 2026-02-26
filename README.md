@@ -12,14 +12,14 @@ Rogue and River helps you log and visualize:
 
 It focuses on simple daily logging, streaks, personal stats, and achievement-style progress.
 
+## Live App
+https://rogue-and-river.vercel.app/dashboard
+
 ## Tech Stack
 - Next.js (App Router)
 - React + TypeScript
 - Tailwind CSS
 - Supabase (Auth + Postgres)
-
-## Status
-Active build in progress (MVP).
 
 ## Run Locally
 

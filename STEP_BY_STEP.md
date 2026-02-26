@@ -1,6 +1,7 @@
 # Rogue and River - Step by Step
 
-## Step 1 (Completed)
+## Step 1
+
 - Scaffolded `Next.js + TypeScript + Tailwind`.
 - Added core routes:
   - `/`
@@ -11,8 +12,10 @@
   - `/hobby/[type]`
 - Added starter dashboard UI and reusable summary card component.
 
-## Step 2 - Connect Supabase (In Progress)
+## Step 2 - Connect Supabase
+
 Completed in code:
+
 - Installed `@supabase/supabase-js` and `@supabase/ssr`.
 - Added reusable Supabase clients:
   - `src/lib/supabase/client.ts`
@@ -23,15 +26,18 @@ Completed in code:
 - Added `supabase/schema.sql` with schema + RLS policies.
 
 Still required from you:
+
 1. Create a Supabase project.
 2. In Supabase SQL editor, run `supabase/schema.sql`.
 3. Create env vars in `.env.local`:
+
 ```env
 NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 ```
 
 Reference SQL (already saved in `supabase/schema.sql`):
+
 ```sql
 create type hobby_type as enum ('swimming','hiking','reading','workout','gaming');
 
@@ -53,7 +59,9 @@ create table public.achievements (
   earned_at timestamptz not null default now()
 );
 ```
-3. Turn on RLS and add policies:
+
+1. Turn on RLS and add policies:
+
 ```sql
 alter table public.hobby_logs enable row level security;
 alter table public.achievements enable row level security;
@@ -71,8 +79,10 @@ create policy "users can view own achievements"
 on public.achievements for select using (auth.uid() = user_id);
 ```
 
-## Step 3 - Auth (In Progress)
+## Step 3 - Auth
+
 Completed in code:
+
 - Implemented server actions for:
   - sign up
   - log in
@@ -91,19 +101,22 @@ Completed in code:
   - file: `src/lib/supabase/middleware.ts`
 
 Still required from you:
+
 1. In Supabase Auth settings, confirm Email provider is enabled.
 2. In Supabase URL configuration, add redirect URLs for local and production:
-   - `http://localhost:3000/auth/callback`
-   - `https://<your-production-domain>/auth/callback`
+  - `http://localhost:3000/auth/callback`
+  - `https://<your-production-domain>/auth/callback`
 3. Manually test:
-   - sign up flow
-   - email confirmation redirect
-   - login
-   - logout
-   - protected route redirect behavior
+  - sign up flow
+  - email confirmation redirect
+  - login
+  - logout
+  - protected route redirect behavior
 
-## Step 4 - First Real Feature (Swimming) (In Progress)
+## Step 4 - First Real Feature (Swimming)
+
 Completed in code:
+
 - Added server action to create swim logs:
   - `src/app/hobby/actions.ts`
 - Implemented real swimming module on `/hobby/swimming`:
@@ -117,12 +130,15 @@ Completed in code:
   - `recharts`
 
 Still required from you:
+
 1. Test creating swim logs through the UI.
 2. Confirm records appear in Supabase table `public.hobby_logs`.
 3. Verify chart and summary values match your inserted logs.
 
 ## Step 5 - Expand Hobbies + Dashboard Summary
+
 Completed in code:
+
 - Expanded hobby log actions:
   - hiking, workout, reading, gaming
   - file: `src/app/hobby/actions.ts`
@@ -142,12 +158,15 @@ Completed in code:
   - `src/lib/hobby-metrics.ts`
 
 Still required from you:
+
 1. Add at least one log for each hobby and verify each form saves correctly.
 2. Confirm dashboard cards update after each new entry.
 3. Spot-check streak numbers for expected behavior.
 
 ## Step 6 - Achievements + Polish
+
 Completed in code:
+
 - Added automatic achievement awarding on log creation:
   - `src/lib/achievements.ts`
   - integrated in `src/app/hobby/actions.ts`
@@ -169,13 +188,16 @@ Completed in code:
   - files: `src/app/hobby/actions.ts`, `src/app/hobby/[type]/page.tsx`, `src/app/hobby/[type]/[id]/edit/page.tsx`
 
 Still required from you:
+
 1. Add enough logs to trigger at least one achievement.
 2. Verify new badges appear on `/profile`.
 3. Confirm dashboard badge count updates after milestones.
 
 ## Step 7 - Deploy
+
 Completed in code:
-- Added CI workflow for pull requests and `main` pushes:
+
+- Added CI workflow for pull requests and `master` pushes:
   - lint + production build
   - `.github/workflows/ci.yml`
 - Restored `.env.example` with deployment env vars.
@@ -184,17 +206,19 @@ Completed in code:
 - Updated README deployment notes.
 
 Still required from you:
+
 1. Push this repo to GitHub.
 2. Connect GitHub repo to Vercel.
 3. Add Vercel environment variables:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `NEXT_PUBLIC_SITE_URL` (your production URL)
+  - `NEXT_PUBLIC_SUPABASE_URL`
+  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+  - `NEXT_PUBLIC_SITE_URL` (your production URL)
 4. In Supabase auth URL settings, add production callback URL:
-   - `https://<your-domain>/auth/callback`
+  - `https://<your-domain>/auth/callback`
 5. Run end-to-end production test:
-   - signup
-   - email callback
-   - login
-   - create/edit/delete log
-   - achievement display
+  - signup
+  - email callback
+  - login
+  - create/edit/delete log
+  - achievement display
+
