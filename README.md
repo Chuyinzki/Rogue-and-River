@@ -15,6 +15,9 @@ It focuses on simple daily logging, streaks, personal stats, and achievement-sty
 ## Live App
 https://rogue-and-river.vercel.app/dashboard
 
+## App Preview
+![Rogue and River dashboard preview](./docs/images/rogue-and-river-dashboard.webp)
+
 ## Build Story
 - Built from a blank folder to production in approximately 3 hours.
 - Developed through iterative pair-programming with an AI coding assistant (OpenAI Codex).
