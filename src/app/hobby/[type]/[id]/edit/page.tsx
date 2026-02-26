@@ -6,6 +6,8 @@ import { requireUser } from "@/lib/auth/guard";
 import { type HobbyType } from "@/lib/hobby-metrics";
 import { createClient } from "@/lib/supabase/server";
 
+export const dynamic = "force-dynamic";
+
 type EditPageProps = {
   params: Promise<{ type: string; id: string }>;
   searchParams: Promise<{ error?: string }>;

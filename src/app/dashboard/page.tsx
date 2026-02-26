@@ -14,6 +14,8 @@ import {
 } from "@/lib/hobby-metrics";
 import { createClient } from "@/lib/supabase/server";
 
+export const dynamic = "force-dynamic";
+
 const hobbyConfig = [
   { key: "swimming", title: "Swimming", href: "/hobby/swimming" },
   { key: "hiking", title: "Hiking", href: "/hobby/hiking" },

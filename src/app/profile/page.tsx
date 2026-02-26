@@ -1,6 +1,8 @@
 import { requireUser } from "@/lib/auth/guard";
 import { createClient } from "@/lib/supabase/server";
 
+export const dynamic = "force-dynamic";
+
 type AchievementRow = {
   id: string;
   hobby_type: string;
