@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 
+import { awardAchievementsForHobby } from "@/lib/achievements";
 import { createClient } from "@/lib/supabase/server";
 
 type HobbyType = "swimming" | "hiking" | "workout" | "reading" | "gaming";
@@ -34,6 +35,12 @@ async function createLog({
   if (error) {
     redirect(`/hobby/${hobbyType}?error=${encodeURIComponent(error.message)}`);
   }
+
+  await awardAchievementsForHobby({
+    supabase,
+    userId: user.id,
+    hobbyType,
+  });
 
   redirect(`/hobby/${hobbyType}?message=Log%20saved.`);
 }

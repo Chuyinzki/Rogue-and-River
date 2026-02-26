@@ -33,6 +33,11 @@ export default async function DashboardPage() {
     .limit(1000);
 
   const logs = ((error ? [] : data) ?? []) as HobbyLog[];
+  const { data: achievementsData, error: achievementsError } = await supabase
+    .from("achievements")
+    .select("id")
+    .eq("user_id", user.id);
+  const achievementsCount = ((achievementsError ? [] : achievementsData) ?? []).length;
 
   const hobbySummaries = hobbyConfig.map(({ key, title, href }) => {
     const hobbyLogs = logs.filter((log) => log.hobby_type === key);
@@ -123,6 +128,12 @@ export default async function DashboardPage() {
           <p className="mt-2 text-slate-700 dark:text-slate-300">
             Live summary values from your hobby logs in Supabase.
           </p>
+          <Link
+            href="/profile"
+            className="mt-3 inline-flex rounded-md border border-slate-300 bg-white px-3 py-1 text-xs font-semibold tracking-wide text-slate-700 uppercase dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+          >
+            Badges earned: {achievementsCount}
+          </Link>
         </div>
         <form action={logout}>
           <button

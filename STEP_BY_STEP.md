@@ -147,8 +147,27 @@ Still required from you:
 3. Spot-check streak numbers for expected behavior.
 
 ## Step 6 - Achievements + Polish
-- Add badge rules and earned badge creation.
-- Improve responsive UI and empty states.
+Completed in code:
+- Added automatic achievement awarding on log creation:
+  - `src/lib/achievements.ts`
+  - integrated in `src/app/hobby/actions.ts`
+- Implemented badge rules:
+  - `First book finished`
+  - `5 swims logged`
+  - `100 pages read`
+  - `3-week hiking streak`
+  - `10 workouts logged`
+  - `20 gaming hours`
+- Replaced profile placeholder badges with live Supabase achievements list:
+  - `src/app/profile/page.tsx`
+- Added dashboard badge count callout linking to profile:
+  - `src/app/dashboard/page.tsx`
+- Improved empty states for achievements in profile.
+
+Still required from you:
+1. Add enough logs to trigger at least one achievement.
+2. Verify new badges appear on `/profile`.
+3. Confirm dashboard badge count updates after milestones.
 
 ## Step 7 - Deploy
 - Push to GitHub.
