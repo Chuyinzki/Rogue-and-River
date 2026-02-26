@@ -13,7 +13,7 @@ Rogue and River helps you log and visualize:
 It focuses on simple daily logging, streaks, personal stats, and achievement-style progress.
 
 ## Live App
-https://rogue-and-river.vercel.app/dashboard
+https://rogue-and-river.vercel.app/
 
 ## App Preview
 ![Rogue and River dashboard preview](./docs/images/rogue-and-river-dashboard.webp)
