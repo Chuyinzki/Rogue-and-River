@@ -42,13 +42,13 @@ export default async function DashboardPage() {
     <main className="mx-auto w-full max-w-6xl px-6 py-10 md:px-10">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <p className="text-xs font-semibold tracking-wider text-blue-700 uppercase">
+          <p className="text-xs font-semibold tracking-wider text-blue-700 uppercase dark:text-blue-300">
             Dashboard
           </p>
-          <h1 className="mt-2 text-3xl font-bold text-slate-900">
+          <h1 className="mt-2 text-3xl font-bold text-slate-900 dark:text-slate-100">
             Your quantified self overview
           </h1>
-          <p className="mt-2 text-slate-600">
+          <p className="mt-2 text-slate-700 dark:text-slate-300">
             Starter layout with mock stats. Next step: wire real data from
             Supabase.
           </p>
@@ -56,7 +56,7 @@ export default async function DashboardPage() {
         <form action={logout}>
           <button
             type="submit"
-            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700"
+            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
           >
             Log out
           </button>
@@ -70,8 +70,8 @@ export default async function DashboardPage() {
       </section>
 
       <section className="bg-surface border-border mt-8 rounded-2xl border p-5">
-        <h2 className="text-lg font-semibold text-slate-800">Quick add</h2>
-        <p className="mt-1 text-sm text-slate-600">
+        <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Quick add</h2>
+        <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
           These buttons will open log forms in the next step.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
@@ -79,7 +79,7 @@ export default async function DashboardPage() {
             <button
               key={name}
               type="button"
-              className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700"
+              className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
             >
               + {name}
             </button>
