@@ -1,10 +1,13 @@
 import Link from "next/link";
 
+import { requireUser } from "@/lib/auth/guard";
+
 type HobbyPageProps = {
   params: Promise<{ type: string }>;
 };
 
 export default async function HobbyTypePage({ params }: HobbyPageProps) {
+  await requireUser();
   const { type } = await params;
   const heading = type.charAt(0).toUpperCase() + type.slice(1);
 

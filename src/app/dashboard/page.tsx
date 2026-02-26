@@ -1,5 +1,6 @@
 import { SummaryCard } from "@/components/summary-card";
 import { logout } from "@/app/auth/actions";
+import { requireUser } from "@/lib/auth/guard";
 
 const hobbySummaries = [
   {
@@ -34,7 +35,9 @@ const hobbySummaries = [
   },
 ];
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  await requireUser();
+
   return (
     <main className="mx-auto w-full max-w-6xl px-6 py-10 md:px-10">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">

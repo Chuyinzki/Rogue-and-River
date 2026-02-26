@@ -1,6 +1,10 @@
+import { requireUser } from "@/lib/auth/guard";
+
 const badges = ["5 swims logged", "100 pages read", "3-week hiking streak"];
 
-export default function ProfilePage() {
+export default async function ProfilePage() {
+  await requireUser();
+
   return (
     <main className="mx-auto w-full max-w-4xl px-6 py-10 md:px-10">
       <h1 className="text-3xl font-bold text-slate-900">Profile</h1>
