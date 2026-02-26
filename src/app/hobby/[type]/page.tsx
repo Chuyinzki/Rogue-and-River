@@ -1,8 +1,24 @@
 import Link from "next/link";
 
-import { createSwimmingLog } from "@/app/hobby/actions";
+import {
+  createGamingLog,
+  createHikingLog,
+  createReadingLog,
+  createSwimmingLog,
+  createWorkoutLog,
+} from "@/app/hobby/actions";
 import { SwimmingWeeklyChart } from "@/components/swimming-weekly-chart";
 import { requireUser } from "@/lib/auth/guard";
+import {
+  getGamingDurationMinutes,
+  getHikingDistanceKm,
+  getReadingPages,
+  getSwimmingDistanceMeters,
+  getWorkoutDurationMinutes,
+  sortByDateDesc,
+  type HobbyLog,
+  type HobbyType,
+} from "@/lib/hobby-metrics";
 import { createClient } from "@/lib/supabase/server";
 
 type HobbyPageProps = {
@@ -10,14 +26,30 @@ type HobbyPageProps = {
   searchParams: Promise<{ error?: string; message?: string }>;
 };
 
-type SwimmingLogRow = {
-  id: string;
-  date: string;
-  details: {
-    distance_meters?: number;
-    duration_minutes?: number;
-    location?: string;
-  };
+type HobbyLogRow = HobbyLog & { id: string };
+
+const supportedTypes: HobbyType[] = [
+  "swimming",
+  "hiking",
+  "workout",
+  "reading",
+  "gaming",
+];
+
+const titles: Record<HobbyType, string> = {
+  swimming: "Swimming",
+  hiking: "Hiking",
+  workout: "Workout",
+  reading: "Reading",
+  gaming: "Gaming",
+};
+
+const descriptions: Record<HobbyType, string> = {
+  swimming: "Log sessions, track distance trends, and monitor your best swims.",
+  hiking: "Track trails, distance, and hike duration over time.",
+  workout: "Capture workout type, effort, and progress session by session.",
+  reading: "Track books and pages read to keep your reading momentum visible.",
+  gaming: "Log game sessions, playtime, and unlocked achievements.",
 };
 
 function formatDate(date: string) {
@@ -28,6 +60,10 @@ function formatDate(date: string) {
   }).format(new Date(date));
 }
 
+function toNumber(value: unknown) {
+  return Number(value ?? 0);
+}
+
 export default async function HobbyTypePage({
   params,
   searchParams,
@@ -35,59 +71,83 @@ export default async function HobbyTypePage({
   const user = await requireUser();
   const { type } = await params;
   const { error, message } = await searchParams;
-  const heading = type.charAt(0).toUpperCase() + type.slice(1);
 
-  if (type !== "swimming") {
+  if (!supportedTypes.includes(type as HobbyType)) {
     return (
       <main className="mx-auto w-full max-w-4xl px-6 py-10 md:px-10">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-              {heading}
-            </h1>
-            <p className="mt-2 text-slate-700 dark:text-slate-300">
-              This module is planned for Step 5. Swimming is the first fully
-              implemented hobby.
-            </p>
-          </div>
-          <Link
-            href="/dashboard"
-            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
-          >
-            Back
-          </Link>
-        </div>
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
+          Unknown hobby type
+        </h1>
+        <p className="mt-2 text-slate-700 dark:text-slate-300">
+          This route is not supported yet.
+        </p>
       </main>
     );
   }
 
+  const hobbyType = type as HobbyType;
   const supabase = await createClient();
   const { data, error: queryError } = await supabase
     .from("hobby_logs")
-    .select("id, date, details")
+    .select("id, hobby_type, date, details")
     .eq("user_id", user.id)
-    .eq("hobby_type", "swimming")
+    .eq("hobby_type", hobbyType)
     .order("date", { ascending: false })
-    .limit(30);
+    .limit(100);
 
-  const logs = ((queryError ? [] : data) ?? []) as SwimmingLogRow[];
+  const logs = sortByDateDesc(((queryError ? [] : data) ?? []) as HobbyLogRow[]);
 
-  const totalDistanceMeters = logs.reduce(
-    (sum, log) => sum + Number(log.details?.distance_meters ?? 0),
-    0,
-  );
-  const personalBestMeters = logs.reduce(
-    (best, log) => Math.max(best, Number(log.details?.distance_meters ?? 0)),
-    0,
-  );
+  const formAction =
+    hobbyType === "swimming"
+      ? createSwimmingLog
+      : hobbyType === "hiking"
+        ? createHikingLog
+        : hobbyType === "workout"
+          ? createWorkoutLog
+          : hobbyType === "reading"
+            ? createReadingLog
+            : createGamingLog;
 
-  const distanceByDate = logs.reduce<Record<string, number>>((acc, log) => {
-    const distance = Number(log.details?.distance_meters ?? 0);
-    acc[log.date] = (acc[log.date] ?? 0) + distance;
-    return acc;
-  }, {});
+  const totalSessions = logs.length;
+  const totalDistanceKm =
+    hobbyType === "swimming"
+      ? logs.reduce((sum, log) => sum + getSwimmingDistanceMeters(log), 0) / 1000
+      : hobbyType === "hiking"
+        ? logs.reduce((sum, log) => sum + getHikingDistanceKm(log), 0)
+        : 0;
 
-  const chartData = Object.entries(distanceByDate)
+  const totalMinutes =
+    hobbyType === "workout"
+      ? logs.reduce((sum, log) => sum + getWorkoutDurationMinutes(log), 0)
+      : hobbyType === "gaming"
+        ? logs.reduce((sum, log) => sum + getGamingDurationMinutes(log), 0)
+        : hobbyType === "swimming"
+          ? logs.reduce(
+              (sum, log) => sum + toNumber(log.details?.duration_minutes),
+              0,
+            )
+          : hobbyType === "hiking"
+            ? logs.reduce(
+                (sum, log) => sum + toNumber(log.details?.duration_minutes),
+                0,
+              )
+            : 0;
+
+  const totalPages =
+    hobbyType === "reading"
+      ? logs.reduce((sum, log) => sum + getReadingPages(log), 0)
+      : 0;
+
+  const swimmingByDate =
+    hobbyType === "swimming"
+      ? logs.reduce<Record<string, number>>((acc, log) => {
+          const distance = getSwimmingDistanceMeters(log);
+          acc[log.date] = (acc[log.date] ?? 0) + distance;
+          return acc;
+        }, {})
+      : {};
+
+  const swimmingChartData = Object.entries(swimmingByDate)
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([date, distanceMeters]) => ({
       label: new Intl.DateTimeFormat("en-US", {
@@ -97,15 +157,20 @@ export default async function HobbyTypePage({
       distanceKm: Number((distanceMeters / 1000).toFixed(2)),
     }));
 
+  const swimmingBestKm =
+    hobbyType === "swimming"
+      ? Math.max(...logs.map((log) => getSwimmingDistanceMeters(log)), 0) / 1000
+      : 0;
+
   return (
     <main className="mx-auto w-full max-w-5xl px-6 py-10 md:px-10">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-            Swimming
+            {titles[hobbyType]}
           </h1>
           <p className="mt-2 text-slate-700 dark:text-slate-300">
-            Log sessions, track distance trends, and monitor your best swims.
+            {descriptions[hobbyType]}
           </p>
         </div>
         <Link
@@ -118,61 +183,200 @@ export default async function HobbyTypePage({
 
       <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <article className="bg-surface border-border rounded-2xl border p-5">
-          <p className="text-sm text-slate-600 dark:text-slate-300">Total distance</p>
+          <p className="text-sm text-slate-600 dark:text-slate-300">Sessions</p>
           <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
-            {(totalDistanceMeters / 1000).toFixed(2)} km
+            {totalSessions}
           </p>
         </article>
         <article className="bg-surface border-border rounded-2xl border p-5">
-          <p className="text-sm text-slate-600 dark:text-slate-300">Personal best</p>
+          <p className="text-sm text-slate-600 dark:text-slate-300">
+            {hobbyType === "reading"
+              ? "Pages read"
+              : hobbyType === "swimming" || hobbyType === "hiking"
+                ? "Distance"
+                : "Duration"}
+          </p>
           <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
-            {(personalBestMeters / 1000).toFixed(2)} km
+            {hobbyType === "reading"
+              ? `${totalPages} pages`
+              : hobbyType === "swimming" || hobbyType === "hiking"
+                ? `${totalDistanceKm.toFixed(2)} km`
+                : `${totalMinutes} min`}
           </p>
         </article>
         <article className="bg-surface border-border rounded-2xl border p-5">
-          <p className="text-sm text-slate-600 dark:text-slate-300">Sessions logged</p>
+          <p className="text-sm text-slate-600 dark:text-slate-300">Highlight</p>
           <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
-            {logs.length}
+            {hobbyType === "swimming"
+              ? `${swimmingBestKm.toFixed(2)} km best`
+              : hobbyType === "gaming"
+                ? `${(totalMinutes / 60).toFixed(1)} hours`
+                : hobbyType === "reading"
+                  ? `${new Set(logs.map((l) => String(l.details?.book_title ?? ""))).size} books`
+                  : "On track"}
           </p>
         </article>
       </section>
 
       <section className="bg-surface border-border mt-6 rounded-2xl border p-5">
-        <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">New swim log</h2>
-        <form action={createSwimmingLog} className="mt-3 grid gap-3 md:grid-cols-2">
+        <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+          New {titles[hobbyType].toLowerCase()} log
+        </h2>
+        <form action={formAction} className="mt-3 grid gap-3 md:grid-cols-2">
           <input
             name="date"
             type="date"
             required
             className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
           />
-          <input
-            name="distance_meters"
-            type="number"
-            min={1}
-            required
-            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
-            placeholder="Distance (meters)"
-          />
-          <input
-            name="duration_minutes"
-            type="number"
-            min={1}
-            required
-            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
-            placeholder="Duration (minutes)"
-          />
-          <input
-            name="location"
-            type="text"
-            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
-            placeholder="Location (optional)"
-          />
+
+          {hobbyType === "swimming" ? (
+            <>
+              <input
+                name="distance_meters"
+                type="number"
+                min={1}
+                required
+                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                placeholder="Distance (meters)"
+              />
+              <input
+                name="duration_minutes"
+                type="number"
+                min={1}
+                required
+                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                placeholder="Duration (minutes)"
+              />
+              <input
+                name="location"
+                type="text"
+                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                placeholder="Location (optional)"
+              />
+            </>
+          ) : null}
+
+          {hobbyType === "hiking" ? (
+            <>
+              <input
+                name="distance_km"
+                type="number"
+                min={0.1}
+                step="0.1"
+                required
+                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                placeholder="Distance (km)"
+              />
+              <input
+                name="duration_minutes"
+                type="number"
+                min={1}
+                required
+                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                placeholder="Duration (minutes)"
+              />
+              <input
+                name="trail"
+                type="text"
+                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                placeholder="Trail name (optional)"
+              />
+            </>
+          ) : null}
+
+          {hobbyType === "workout" ? (
+            <>
+              <input
+                name="workout_type"
+                type="text"
+                required
+                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                placeholder="Workout type (e.g. Push day)"
+              />
+              <input
+                name="duration_minutes"
+                type="number"
+                min={1}
+                required
+                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                placeholder="Duration (minutes)"
+              />
+              <input
+                name="reps"
+                type="number"
+                min={1}
+                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                placeholder="Reps (optional)"
+              />
+              <input
+                name="weight_kg"
+                type="number"
+                min={1}
+                step="0.5"
+                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                placeholder="Weight kg (optional)"
+              />
+            </>
+          ) : null}
+
+          {hobbyType === "reading" ? (
+            <>
+              <input
+                name="book_title"
+                type="text"
+                required
+                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                placeholder="Book title"
+              />
+              <input
+                name="pages_read"
+                type="number"
+                min={1}
+                required
+                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                placeholder="Pages read"
+              />
+              <input
+                name="notes"
+                type="text"
+                className="md:col-span-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                placeholder="Notes (optional)"
+              />
+            </>
+          ) : null}
+
+          {hobbyType === "gaming" ? (
+            <>
+              <input
+                name="game_name"
+                type="text"
+                required
+                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                placeholder="Game name"
+              />
+              <input
+                name="duration_minutes"
+                type="number"
+                min={1}
+                required
+                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                placeholder="Duration (minutes)"
+              />
+              <input
+                name="achievement"
+                type="text"
+                className="md:col-span-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                placeholder="Achievement unlocked (optional)"
+              />
+            </>
+          ) : null}
+
           <button
             type="submit"
             className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200 md:col-span-2"
           >
-            Save swim
+            Save log
           </button>
           {error ? (
             <p className="text-sm text-red-700 md:col-span-2 dark:text-red-400">{error}</p>
@@ -185,23 +389,25 @@ export default async function HobbyTypePage({
         </form>
       </section>
 
-      <section className="bg-surface border-border mt-6 rounded-2xl border p-5">
-        <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-          Distance trend
-        </h2>
-        <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
-          Last {logs.length} swimming sessions.
-        </p>
-        {chartData.length > 0 ? (
-          <div className="mt-4">
-            <SwimmingWeeklyChart data={chartData} />
-          </div>
-        ) : (
-          <p className="mt-4 text-sm text-slate-600 dark:text-slate-300">
-            No data yet. Add your first swim log above.
+      {hobbyType === "swimming" ? (
+        <section className="bg-surface border-border mt-6 rounded-2xl border p-5">
+          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+            Distance trend
+          </h2>
+          <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+            One point per day (aggregated distance).
           </p>
-        )}
-      </section>
+          {swimmingChartData.length > 0 ? (
+            <div className="mt-4">
+              <SwimmingWeeklyChart data={swimmingChartData} />
+            </div>
+          ) : (
+            <p className="mt-4 text-sm text-slate-600 dark:text-slate-300">
+              No data yet. Add your first swim log above.
+            </p>
+          )}
+        </section>
+      ) : null}
 
       <section className="bg-surface border-border mt-6 rounded-2xl border p-5">
         <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
@@ -209,37 +415,59 @@ export default async function HobbyTypePage({
         </h2>
         {logs.length === 0 ? (
           <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
-            No swims logged yet.
+            No logs yet.
           </p>
         ) : (
           <ul className="mt-3 space-y-2">
-            {logs.map((log) => {
-              const distanceMeters = Number(log.details?.distance_meters ?? 0);
-              const durationMinutes = Number(log.details?.duration_minutes ?? 0);
-              const pace = durationMinutes > 0 ? durationMinutes / (distanceMeters / 1000) : 0;
-
-              return (
-                <li
-                  key={log.id}
-                  className="rounded-md border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800"
-                >
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                    {formatDate(log.date)}
-                  </p>
+            {logs.map((log) => (
+              <li
+                key={log.id}
+                className="rounded-md border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800"
+              >
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  {formatDate(log.date)}
+                </p>
+                {hobbyType === "swimming" ? (
                   <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
-                    {(distanceMeters / 1000).toFixed(2)} km in {durationMinutes} min
-                    {Number.isFinite(pace) && pace > 0
-                      ? ` (${pace.toFixed(1)} min/km)`
+                    {(toNumber(log.details?.distance_meters) / 1000).toFixed(2)} km in{" "}
+                    {toNumber(log.details?.duration_minutes)} min
+                  </p>
+                ) : null}
+                {hobbyType === "hiking" ? (
+                  <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+                    {toNumber(log.details?.distance_km).toFixed(1)} km in{" "}
+                    {toNumber(log.details?.duration_minutes)} min
+                    {log.details?.trail ? ` • ${String(log.details.trail)}` : ""}
+                  </p>
+                ) : null}
+                {hobbyType === "workout" ? (
+                  <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+                    {String(log.details?.workout_type ?? "Workout")} •{" "}
+                    {toNumber(log.details?.duration_minutes)} min
+                    {log.details?.reps ? ` • ${toNumber(log.details.reps)} reps` : ""}
+                    {log.details?.weight_kg
+                      ? ` • ${toNumber(log.details.weight_kg)} kg`
                       : ""}
                   </p>
-                  {log.details?.location ? (
-                    <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-                      {log.details.location}
-                    </p>
-                  ) : null}
-                </li>
-              );
-            })}
+                ) : null}
+                {hobbyType === "reading" ? (
+                  <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+                    {String(log.details?.book_title ?? "Book")} •{" "}
+                    {toNumber(log.details?.pages_read)} pages
+                    {log.details?.notes ? ` • ${String(log.details.notes)}` : ""}
+                  </p>
+                ) : null}
+                {hobbyType === "gaming" ? (
+                  <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+                    {String(log.details?.game_name ?? "Game")} •{" "}
+                    {toNumber(log.details?.duration_minutes)} min
+                    {log.details?.achievement
+                      ? ` • ${String(log.details.achievement)}`
+                      : ""}
+                  </p>
+                ) : null}
+              </li>
+            ))}
           </ul>
         )}
       </section>

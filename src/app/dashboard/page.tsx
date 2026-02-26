@@ -1,42 +1,111 @@
-import { SummaryCard } from "@/components/summary-card";
-import { logout } from "@/app/auth/actions";
-import { requireUser } from "@/lib/auth/guard";
+import Link from "next/link";
 
-const hobbySummaries = [
-  {
-    title: "Swimming",
-    metric: "4.8 km this week",
-    streak: "Streak: 3 days",
-    href: "/hobby/swimming",
-  },
-  {
-    title: "Hiking",
-    metric: "12.4 mi this month",
-    streak: "Streak: 2 weeks",
-    href: "/hobby/hiking",
-  },
-  {
-    title: "Workouts",
-    metric: "5 sessions this week",
-    streak: "Streak: 6 days",
-    href: "/hobby/workout",
-  },
-  {
-    title: "Reading",
-    metric: "220 pages this week",
-    streak: "Streak: 9 days",
-    href: "/hobby/reading",
-  },
-  {
-    title: "Gaming",
-    metric: "7.5 hours this week",
-    streak: "Streak: 4 days",
-    href: "/hobby/gaming",
-  },
-];
+import { logout } from "@/app/auth/actions";
+import { SummaryCard } from "@/components/summary-card";
+import { requireUser } from "@/lib/auth/guard";
+import {
+  getCurrentStreakDays,
+  getGamingDurationMinutes,
+  getHikingDistanceKm,
+  getReadingPages,
+  getSwimmingDistanceMeters,
+  getWorkoutDurationMinutes,
+  type HobbyLog,
+} from "@/lib/hobby-metrics";
+import { createClient } from "@/lib/supabase/server";
+
+const hobbyConfig = [
+  { key: "swimming", title: "Swimming", href: "/hobby/swimming" },
+  { key: "hiking", title: "Hiking", href: "/hobby/hiking" },
+  { key: "workout", title: "Workouts", href: "/hobby/workout" },
+  { key: "reading", title: "Reading", href: "/hobby/reading" },
+  { key: "gaming", title: "Gaming", href: "/hobby/gaming" },
+] as const;
 
 export default async function DashboardPage() {
-  await requireUser();
+  const user = await requireUser();
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("hobby_logs")
+    .select("hobby_type, date, details")
+    .eq("user_id", user.id)
+    .order("date", { ascending: false })
+    .limit(1000);
+
+  const logs = ((error ? [] : data) ?? []) as HobbyLog[];
+
+  const hobbySummaries = hobbyConfig.map(({ key, title, href }) => {
+    const hobbyLogs = logs.filter((log) => log.hobby_type === key);
+    const streak = getCurrentStreakDays(hobbyLogs.map((log) => log.date));
+
+    if (hobbyLogs.length === 0) {
+      return {
+        title,
+        metric: "No logs yet",
+        streak: "Streak: 0 days",
+        href,
+      };
+    }
+
+    if (key === "swimming") {
+      const totalMeters = hobbyLogs.reduce(
+        (sum, log) => sum + getSwimmingDistanceMeters(log),
+        0,
+      );
+      const bestMeters = hobbyLogs.reduce(
+        (best, log) => Math.max(best, getSwimmingDistanceMeters(log)),
+        0,
+      );
+      return {
+        title,
+        metric: `${(totalMeters / 1000).toFixed(2)} km total`,
+        streak: `Streak: ${streak} days | Best: ${(bestMeters / 1000).toFixed(2)} km`,
+        href,
+      };
+    }
+
+    if (key === "hiking") {
+      const totalKm = hobbyLogs.reduce((sum, log) => sum + getHikingDistanceKm(log), 0);
+      return {
+        title,
+        metric: `${totalKm.toFixed(1)} km total`,
+        streak: `Streak: ${streak} days`,
+        href,
+      };
+    }
+
+    if (key === "workout") {
+      const totalMinutes = hobbyLogs.reduce(
+        (sum, log) => sum + getWorkoutDurationMinutes(log),
+        0,
+      );
+      return {
+        title,
+        metric: `${hobbyLogs.length} sessions (${totalMinutes} min)`,
+        streak: `Streak: ${streak} days`,
+        href,
+      };
+    }
+
+    if (key === "reading") {
+      const totalPages = hobbyLogs.reduce((sum, log) => sum + getReadingPages(log), 0);
+      return {
+        title,
+        metric: `${totalPages} pages read`,
+        streak: `Streak: ${streak} days`,
+        href,
+      };
+    }
+
+    const totalHours =
+      hobbyLogs.reduce((sum, log) => sum + getGamingDurationMinutes(log), 0) / 60;
+    return {
+      title,
+      metric: `${totalHours.toFixed(1)} hours played`,
+      streak: `Streak: ${streak} days`,
+      href,
+    };
+  });
 
   return (
     <main className="mx-auto w-full max-w-6xl px-6 py-10 md:px-10">
@@ -49,8 +118,7 @@ export default async function DashboardPage() {
             Your quantified self overview
           </h1>
           <p className="mt-2 text-slate-700 dark:text-slate-300">
-            Starter layout with mock stats. Next step: wire real data from
-            Supabase.
+            Live summary values from your hobby logs in Supabase.
           </p>
         </div>
         <form action={logout}>
@@ -72,17 +140,17 @@ export default async function DashboardPage() {
       <section className="bg-surface border-border mt-8 rounded-2xl border p-5">
         <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Quick add</h2>
         <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
-          These buttons will open log forms in the next step.
+          Jump into any module and add a new activity.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
-          {["Swim", "Hike", "Workout", "Reading", "Gaming"].map((name) => (
-            <button
-              key={name}
-              type="button"
+          {hobbyConfig.map((hobby) => (
+            <Link
+              key={hobby.key}
+              href={hobby.href}
               className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
             >
-              + {name}
-            </button>
+              + {hobby.title}
+            </Link>
           ))}
         </div>
       </section>

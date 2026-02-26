@@ -122,9 +122,27 @@ Still required from you:
 3. Verify chart and summary values match your inserted logs.
 
 ## Step 5 - Expand Hobbies + Dashboard Summary
-- Add hiking, workouts, reading, gaming input variants.
-- Render summary cards from real queries.
-- Add streak + personal best calculations.
+Completed in code:
+- Expanded hobby log actions:
+  - hiking, workout, reading, gaming
+  - file: `src/app/hobby/actions.ts`
+- Upgraded `/hobby/[type]` to support all 5 hobby modules with:
+  - type-specific forms
+  - persisted Supabase writes
+  - recent logs rendering per hobby
+  - retained swimming trend chart
+- Replaced dashboard mock cards with live Supabase summaries:
+  - total metrics per hobby
+  - per-hobby streak calculation
+  - swimming personal-best summary
+  - file: `src/app/dashboard/page.tsx`
+- Added shared metrics helper:
+  - `src/lib/hobby-metrics.ts`
+
+Still required from you:
+1. Add at least one log for each hobby and verify each form saves correctly.
+2. Confirm dashboard cards update after each new entry.
+3. Spot-check streak numbers for expected behavior.
 
 ## Step 6 - Achievements + Polish
 - Add badge rules and earned badge creation.
