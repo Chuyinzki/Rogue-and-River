@@ -15,6 +15,12 @@ It focuses on simple daily logging, streaks, personal stats, and achievement-sty
 ## Live App
 https://rogue-and-river.vercel.app/dashboard
 
+## Build Story
+- Built from a blank folder to production in approximately 3 hours.
+- Developed through iterative pair-programming with an AI coding assistant (OpenAI Codex).
+- Includes auth, Supabase-backed CRUD, analytics/charts, achievements, edit/delete flows, testing, CI, and deployment hardening.
+- Full details: [`BUILD_STORY.md`](./BUILD_STORY.md)
+
 ## Tech Stack
 - Next.js (App Router)
 - React + TypeScript
