@@ -3,20 +3,8 @@
 import { redirect } from "next/navigation";
 
 import { awardAchievementsForHobby } from "@/lib/achievements";
+import { isHobbyType, type HobbyType } from "@/lib/hobby-config";
 import { createClient } from "@/lib/supabase/server";
-
-type HobbyType = "swimming" | "hiking" | "workout" | "reading" | "gaming";
-const hobbyTypes: HobbyType[] = [
-  "swimming",
-  "hiking",
-  "workout",
-  "reading",
-  "gaming",
-];
-
-function isHobbyType(value: string): value is HobbyType {
-  return hobbyTypes.includes(value as HobbyType);
-}
 
 function buildDetailsFromForm(hobbyType: HobbyType, formData: FormData) {
   if (hobbyType === "swimming") {
@@ -122,7 +110,6 @@ async function createLog({
   }
 
   await awardAchievementsForHobby({
-    supabase,
     userId: user.id,
     hobbyType,
   });
@@ -284,7 +271,6 @@ export async function updateHobbyLog(formData: FormData) {
   }
 
   await awardAchievementsForHobby({
-    supabase,
     userId: user.id,
     hobbyType: hobbyTypeRaw,
   });

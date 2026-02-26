@@ -3,7 +3,10 @@ import { redirect } from "next/navigation";
 
 import { deleteHobbyLog, updateHobbyLog } from "@/app/hobby/actions";
 import { requireUser } from "@/lib/auth/guard";
-import { type HobbyType } from "@/lib/hobby-metrics";
+import {
+  isHobbyType,
+  type HobbyType,
+} from "@/lib/hobby-config";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -20,14 +23,6 @@ type HobbyLogRow = {
   details: Record<string, unknown> | null;
 };
 
-const supportedTypes: HobbyType[] = [
-  "swimming",
-  "hiking",
-  "workout",
-  "reading",
-  "gaming",
-];
-
 function toNumber(value: unknown) {
   return Number(value ?? 0);
 }
@@ -37,11 +32,11 @@ export default async function EditHobbyLogPage({ params, searchParams }: EditPag
   const { type, id } = await params;
   const { error } = await searchParams;
 
-  if (!supportedTypes.includes(type as HobbyType)) {
+  if (!isHobbyType(type)) {
     redirect("/dashboard");
   }
 
-  const hobbyType = type as HobbyType;
+  const hobbyType: HobbyType = type;
   const supabase = await createClient();
   const { data, error: queryError } = await supabase
     .from("hobby_logs")

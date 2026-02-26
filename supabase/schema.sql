@@ -20,6 +20,9 @@ create table if not exists public.achievements (
   earned_at timestamptz not null default now()
 );
 
+create unique index if not exists achievements_user_hobby_title_uidx
+  on public.achievements (user_id, hobby_type, title);
+
 alter table public.hobby_logs enable row level security;
 alter table public.achievements enable row level security;
 
@@ -36,7 +39,8 @@ with check (auth.uid() = user_id);
 drop policy if exists "users can update own hobby logs" on public.hobby_logs;
 create policy "users can update own hobby logs"
 on public.hobby_logs for update
-using (auth.uid() = user_id);
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
 
 drop policy if exists "users can delete own hobby logs" on public.hobby_logs;
 create policy "users can delete own hobby logs"

@@ -1,4 +1,6 @@
-import { getCurrentStreakDays, type HobbyLog, type HobbyType } from "@/lib/hobby-metrics";
+import type { HobbyType } from "@/lib/hobby-config";
+import { getCurrentStreakDays, type HobbyLog } from "@/lib/hobby-metrics";
+import { createClient } from "@/lib/supabase/server";
 
 type AchievementCandidate = {
   hobbyType: HobbyType;
@@ -6,7 +8,7 @@ type AchievementCandidate = {
   description: string;
 };
 
-function getAchievementCandidates(hobbyType: HobbyType, logs: HobbyLog[]) {
+export function getAchievementCandidates(hobbyType: HobbyType, logs: HobbyLog[]) {
   const candidates: AchievementCandidate[] = [];
 
   if (hobbyType === "swimming" && logs.length >= 5) {
@@ -78,15 +80,13 @@ function getAchievementCandidates(hobbyType: HobbyType, logs: HobbyLog[]) {
 }
 
 export async function awardAchievementsForHobby({
-  supabase,
   userId,
   hobbyType,
 }: {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: any;
   userId: string;
   hobbyType: HobbyType;
 }) {
+  const supabase = await createClient();
   const { data: logsData } = await supabase
     .from("hobby_logs")
     .select("hobby_type, date, details")
@@ -121,6 +121,9 @@ export async function awardAchievementsForHobby({
     }));
 
   if (toInsert.length > 0) {
-    await supabase.from("achievements").insert(toInsert);
+    await supabase.from("achievements").upsert(toInsert, {
+      onConflict: "user_id,hobby_type,title",
+      ignoreDuplicates: true,
+    });
   }
 }

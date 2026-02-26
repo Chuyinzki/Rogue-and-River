@@ -1,9 +1,4 @@
-export type HobbyType =
-  | "swimming"
-  | "hiking"
-  | "workout"
-  | "reading"
-  | "gaming";
+import type { HobbyType } from "@/lib/hobby-config";
 
 export type HobbyLog = {
   hobby_type: HobbyType;

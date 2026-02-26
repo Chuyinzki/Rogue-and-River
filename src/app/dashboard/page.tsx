@@ -12,17 +12,10 @@ import {
   getWorkoutDurationMinutes,
   type HobbyLog,
 } from "@/lib/hobby-metrics";
+import { hobbyTitles, supportedHobbyTypes } from "@/lib/hobby-config";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
-
-const hobbyConfig = [
-  { key: "swimming", title: "Swimming", href: "/hobby/swimming" },
-  { key: "hiking", title: "Hiking", href: "/hobby/hiking" },
-  { key: "workout", title: "Workouts", href: "/hobby/workout" },
-  { key: "reading", title: "Reading", href: "/hobby/reading" },
-  { key: "gaming", title: "Gaming", href: "/hobby/gaming" },
-] as const;
 
 export default async function DashboardPage() {
   const user = await requireUser();
@@ -41,7 +34,9 @@ export default async function DashboardPage() {
     .eq("user_id", user.id);
   const achievementsCount = ((achievementsError ? [] : achievementsData) ?? []).length;
 
-  const hobbySummaries = hobbyConfig.map(({ key, title, href }) => {
+  const hobbySummaries = supportedHobbyTypes.map((key) => {
+    const title = hobbyTitles[key];
+    const href = `/hobby/${key}`;
     const hobbyLogs = logs.filter((log) => log.hobby_type === key);
     const streak = getCurrentStreakDays(hobbyLogs.map((log) => log.date));
 
@@ -159,13 +154,13 @@ export default async function DashboardPage() {
           Jump into any module and add a new activity.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
-          {hobbyConfig.map((hobby) => (
+          {supportedHobbyTypes.map((hobbyType) => (
             <Link
-              key={hobby.key}
-              href={hobby.href}
+              key={hobbyType}
+              href={`/hobby/${hobbyType}`}
               className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
             >
-              + {hobby.title}
+              + {hobbyTitles[hobbyType]}
             </Link>
           ))}
         </div>
