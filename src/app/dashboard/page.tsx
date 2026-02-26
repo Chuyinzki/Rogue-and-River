@@ -1,4 +1,5 @@
 import { SummaryCard } from "@/components/summary-card";
+import { logout } from "@/app/auth/actions";
 
 const hobbySummaries = [
   {
@@ -49,6 +50,14 @@ export default function DashboardPage() {
             Supabase.
           </p>
         </div>
+        <form action={logout}>
+          <button
+            type="submit"
+            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700"
+          >
+            Log out
+          </button>
+        </form>
       </div>
 
       <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

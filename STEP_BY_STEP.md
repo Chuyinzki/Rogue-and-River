@@ -11,9 +11,27 @@
   - `/hobby/[type]`
 - Added starter dashboard UI and reusable summary card component.
 
-## Step 2 - Connect Supabase
+## Step 2 - Connect Supabase (In Progress)
+Completed in code:
+- Installed `@supabase/supabase-js` and `@supabase/ssr`.
+- Added reusable Supabase clients:
+  - `src/lib/supabase/client.ts`
+  - `src/lib/supabase/server.ts`
+  - `src/lib/supabase/middleware.ts`
+- Added root `middleware.ts` for Supabase session refresh.
+- Added `.env.example`.
+- Added `supabase/schema.sql` with schema + RLS policies.
+
+Still required from you:
 1. Create a Supabase project.
-2. In Supabase SQL editor, create initial schema:
+2. In Supabase SQL editor, run `supabase/schema.sql`.
+3. Create env vars in `.env.local`:
+```env
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+```
+
+Reference SQL (already saved in `supabase/schema.sql`):
 ```sql
 create type hobby_type as enum ('swimming','hiking','reading','workout','gaming');
 
@@ -52,19 +70,37 @@ on public.hobby_logs for update using (auth.uid() = user_id);
 create policy "users can view own achievements"
 on public.achievements for select using (auth.uid() = user_id);
 ```
-4. Install SDK:
-```bash
-npm install @supabase/supabase-js @supabase/ssr
-```
-5. Create env vars in `.env.local`:
-```env
-NEXT_PUBLIC_SUPABASE_URL=...
-NEXT_PUBLIC_SUPABASE_ANON_KEY=...
-```
 
-## Step 3 - Auth
-- Implement sign up and log in actions in `/signup` and `/login`.
-- Add middleware to protect `/dashboard`, `/profile`, and `/hobby/*`.
+## Step 3 - Auth (In Progress)
+Completed in code:
+- Implemented server actions for:
+  - sign up
+  - log in
+  - log out
+  - file: `src/app/auth/actions.ts`
+- Added auth callback route:
+  - `src/app/auth/callback/route.ts`
+- Connected forms:
+  - `src/app/login/page.tsx`
+  - `src/app/signup/page.tsx`
+- Added logout action button on dashboard:
+  - `src/app/dashboard/page.tsx`
+- Updated middleware route protection and redirects:
+  - redirects unauthenticated users from `/dashboard`, `/profile`, `/hobby/*` to `/login`
+  - redirects authenticated users away from `/login` and `/signup` to `/dashboard`
+  - file: `src/lib/supabase/middleware.ts`
+
+Still required from you:
+1. In Supabase Auth settings, confirm Email provider is enabled.
+2. In Supabase URL configuration, add redirect URLs for local and production:
+   - `http://localhost:3000/auth/callback`
+   - `https://<your-production-domain>/auth/callback`
+3. Manually test:
+   - sign up flow
+   - email confirmation redirect
+   - login
+   - logout
+   - protected route redirect behavior
 
 ## Step 4 - First Real Feature (Swimming)
 - Build swimming log form.
