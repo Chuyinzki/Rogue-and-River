@@ -114,6 +114,7 @@ export async function createReadingLog(formData: FormData) {
   const bookTitle = String(formData.get("book_title") ?? "").trim();
   const pagesRead = Number(formData.get("pages_read") ?? 0);
   const notes = String(formData.get("notes") ?? "").trim();
+  const finished = String(formData.get("finished") ?? "") === "on";
 
   if (!date || !bookTitle || pagesRead <= 0) {
     redirect(
@@ -128,6 +129,7 @@ export async function createReadingLog(formData: FormData) {
       book_title: bookTitle,
       pages_read: pagesRead,
       notes,
+      finished,
     },
   });
 }

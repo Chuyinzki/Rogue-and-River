@@ -137,6 +137,10 @@ export default async function HobbyTypePage({
     hobbyType === "reading"
       ? logs.reduce((sum, log) => sum + getReadingPages(log), 0)
       : 0;
+  const readingFinishedCount =
+    hobbyType === "reading"
+      ? logs.filter((log) => log.details?.finished === true).length
+      : 0;
 
   const swimmingByDate =
     hobbyType === "swimming"
@@ -212,7 +216,7 @@ export default async function HobbyTypePage({
               : hobbyType === "gaming"
                 ? `${(totalMinutes / 60).toFixed(1)} hours`
                 : hobbyType === "reading"
-                  ? `${new Set(logs.map((l) => String(l.details?.book_title ?? ""))).size} books`
+                  ? `Books finished: ${readingFinishedCount}`
                   : "On track"}
           </p>
         </article>
@@ -343,6 +347,14 @@ export default async function HobbyTypePage({
                 className="md:col-span-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
                 placeholder="Notes (optional)"
               />
+              <label className="md:col-span-2 inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                <input
+                  name="finished"
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-slate-300 text-slate-900 dark:border-slate-600"
+                />
+                Mark as finished
+              </label>
             </>
           ) : null}
 
@@ -455,6 +467,7 @@ export default async function HobbyTypePage({
                     {String(log.details?.book_title ?? "Book")} •{" "}
                     {toNumber(log.details?.pages_read)} pages
                     {log.details?.notes ? ` • ${String(log.details.notes)}` : ""}
+                    {log.details?.finished === true ? " • Finished" : ""}
                   </p>
                 ) : null}
                 {hobbyType === "gaming" ? (
@@ -474,3 +487,4 @@ export default async function HobbyTypePage({
     </main>
   );
 }
+

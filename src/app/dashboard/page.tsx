@@ -89,10 +89,13 @@ export default async function DashboardPage() {
 
     if (key === "reading") {
       const totalPages = hobbyLogs.reduce((sum, log) => sum + getReadingPages(log), 0);
+      const finishedCount = hobbyLogs.filter(
+        (log) => log.details?.finished === true,
+      ).length;
       return {
         title,
         metric: `${totalPages} pages read`,
-        streak: `Streak: ${streak} days`,
+        streak: `Streak: ${streak} days | Finished: ${finishedCount}`,
         href,
       };
     }

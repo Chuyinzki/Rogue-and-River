@@ -126,6 +126,8 @@ Completed in code:
 - Expanded hobby log actions:
   - hiking, workout, reading, gaming
   - file: `src/app/hobby/actions.ts`
+- Reading logs now support a manual `finished` marker.
+- Reading UI now shows finished status in recent sessions and finished counts in summaries.
 - Upgraded `/hobby/[type]` to support all 5 hobby modules with:
   - type-specific forms
   - persisted Supabase writes
