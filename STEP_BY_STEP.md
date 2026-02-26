@@ -102,11 +102,24 @@ Still required from you:
    - logout
    - protected route redirect behavior
 
-## Step 4 - First Real Feature (Swimming)
-- Build swimming log form.
-- Save records into `hobby_logs`.
-- Render list of swim sessions.
-- Add first chart (weekly distance trend).
+## Step 4 - First Real Feature (Swimming) (In Progress)
+Completed in code:
+- Added server action to create swim logs:
+  - `src/app/hobby/actions.ts`
+- Implemented real swimming module on `/hobby/swimming`:
+  - save form (date, distance, duration, location)
+  - stats cards (total distance, personal best, sessions count)
+  - recent sessions list
+  - file: `src/app/hobby/[type]/page.tsx`
+- Added chart component for swim distance trend:
+  - `src/components/swimming-weekly-chart.tsx`
+- Installed chart dependency:
+  - `recharts`
+
+Still required from you:
+1. Test creating swim logs through the UI.
+2. Confirm records appear in Supabase table `public.hobby_logs`.
+3. Verify chart and summary values match your inserted logs.
 
 ## Step 5 - Expand Hobbies + Dashboard Summary
 - Add hiking, workouts, reading, gaming input variants.
