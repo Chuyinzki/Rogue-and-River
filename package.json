@@ -10,6 +10,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:e2e:ci": "playwright test tests/e2e/smoke.spec.ts",
+    "seed:e2e": "playwright test tests/e2e/seed-user-data.spec.ts",
+    "test:e2e:seeded": "npm run seed:e2e && playwright test tests/e2e/smoke.spec.ts",
     "prepare": "husky"
   },
   "lint-staged": {
