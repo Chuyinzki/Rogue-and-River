@@ -1,4 +1,8 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Rogue and River
+
+Personal quantified-self dashboard for tracking swimming, hiking, workouts, reading, and gaming.
+
+Built with Next.js + Tailwind CSS.
 
 ## Getting Started
 
