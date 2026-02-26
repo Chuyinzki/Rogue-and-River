@@ -6,6 +6,91 @@ import { awardAchievementsForHobby } from "@/lib/achievements";
 import { createClient } from "@/lib/supabase/server";
 
 type HobbyType = "swimming" | "hiking" | "workout" | "reading" | "gaming";
+const hobbyTypes: HobbyType[] = [
+  "swimming",
+  "hiking",
+  "workout",
+  "reading",
+  "gaming",
+];
+
+function isHobbyType(value: string): value is HobbyType {
+  return hobbyTypes.includes(value as HobbyType);
+}
+
+function buildDetailsFromForm(hobbyType: HobbyType, formData: FormData) {
+  if (hobbyType === "swimming") {
+    const distanceMeters = Number(formData.get("distance_meters") ?? 0);
+    const durationMinutes = Number(formData.get("duration_minutes") ?? 0);
+    const location = String(formData.get("location") ?? "").trim();
+    if (distanceMeters <= 0 || durationMinutes <= 0) {
+      return null;
+    }
+    return {
+      distance_meters: distanceMeters,
+      duration_minutes: durationMinutes,
+      location,
+    };
+  }
+
+  if (hobbyType === "hiking") {
+    const distanceKm = Number(formData.get("distance_km") ?? 0);
+    const durationMinutes = Number(formData.get("duration_minutes") ?? 0);
+    const trail = String(formData.get("trail") ?? "").trim();
+    if (distanceKm <= 0 || durationMinutes <= 0) {
+      return null;
+    }
+    return {
+      distance_km: distanceKm,
+      duration_minutes: durationMinutes,
+      trail,
+    };
+  }
+
+  if (hobbyType === "workout") {
+    const workoutType = String(formData.get("workout_type") ?? "").trim();
+    const durationMinutes = Number(formData.get("duration_minutes") ?? 0);
+    const reps = Number(formData.get("reps") ?? 0);
+    const weightKg = Number(formData.get("weight_kg") ?? 0);
+    if (!workoutType || durationMinutes <= 0) {
+      return null;
+    }
+    return {
+      workout_type: workoutType,
+      duration_minutes: durationMinutes,
+      reps: reps > 0 ? reps : null,
+      weight_kg: weightKg > 0 ? weightKg : null,
+    };
+  }
+
+  if (hobbyType === "reading") {
+    const bookTitle = String(formData.get("book_title") ?? "").trim();
+    const pagesRead = Number(formData.get("pages_read") ?? 0);
+    const notes = String(formData.get("notes") ?? "").trim();
+    const finished = String(formData.get("finished") ?? "") === "on";
+    if (!bookTitle || pagesRead <= 0) {
+      return null;
+    }
+    return {
+      book_title: bookTitle,
+      pages_read: pagesRead,
+      notes,
+      finished,
+    };
+  }
+
+  const gameName = String(formData.get("game_name") ?? "").trim();
+  const durationMinutes = Number(formData.get("duration_minutes") ?? 0);
+  const achievement = String(formData.get("achievement") ?? "").trim();
+  if (!gameName || durationMinutes <= 0) {
+    return null;
+  }
+  return {
+    game_name: gameName,
+    duration_minutes: durationMinutes,
+    achievement,
+  };
+}
 
 async function createLog({
   hobbyType,
@@ -162,4 +247,78 @@ export async function createGamingLog(formData: FormData) {
       achievement,
     },
   });
+}
+
+export async function updateHobbyLog(formData: FormData) {
+  const logId = String(formData.get("log_id") ?? "").trim();
+  const hobbyTypeRaw = String(formData.get("hobby_type") ?? "").trim();
+  const date = String(formData.get("date") ?? "").trim();
+
+  if (!logId || !isHobbyType(hobbyTypeRaw) || !date) {
+    redirect("/dashboard");
+  }
+
+  const details = buildDetailsFromForm(hobbyTypeRaw, formData);
+  if (!details) {
+    redirect(`/hobby/${hobbyTypeRaw}/${logId}/edit?error=Missing%20required%20fields.`);
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { error } = await supabase
+    .from("hobby_logs")
+    .update({ date, details })
+    .eq("id", logId)
+    .eq("user_id", user.id)
+    .eq("hobby_type", hobbyTypeRaw);
+
+  if (error) {
+    redirect(`/hobby/${hobbyTypeRaw}/${logId}/edit?error=${encodeURIComponent(error.message)}`);
+  }
+
+  await awardAchievementsForHobby({
+    supabase,
+    userId: user.id,
+    hobbyType: hobbyTypeRaw,
+  });
+
+  redirect(`/hobby/${hobbyTypeRaw}?message=Log%20updated.`);
+}
+
+export async function deleteHobbyLog(formData: FormData) {
+  const logId = String(formData.get("log_id") ?? "").trim();
+  const hobbyTypeRaw = String(formData.get("hobby_type") ?? "").trim();
+
+  if (!logId || !isHobbyType(hobbyTypeRaw)) {
+    redirect("/dashboard");
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { error } = await supabase
+    .from("hobby_logs")
+    .delete()
+    .eq("id", logId)
+    .eq("user_id", user.id)
+    .eq("hobby_type", hobbyTypeRaw);
+
+  if (error) {
+    redirect(`/hobby/${hobbyTypeRaw}?error=${encodeURIComponent(error.message)}`);
+  }
+
+  redirect(`/hobby/${hobbyTypeRaw}?message=Log%20deleted.`);
 }

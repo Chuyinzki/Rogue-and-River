@@ -163,6 +163,10 @@ Completed in code:
 - Added dashboard badge count callout linking to profile:
   - `src/app/dashboard/page.tsx`
 - Improved empty states for achievements in profile.
+- Added log management:
+  - delete from recent sessions
+  - edit via `/hobby/[type]/[id]/edit`
+  - files: `src/app/hobby/actions.ts`, `src/app/hobby/[type]/page.tsx`, `src/app/hobby/[type]/[id]/edit/page.tsx`
 
 Still required from you:
 1. Add enough logs to trigger at least one achievement.
